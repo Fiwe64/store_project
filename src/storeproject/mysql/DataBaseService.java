@@ -15,7 +15,7 @@ import java.sql.Statement;
  */
 public abstract class DataBaseService {
     protected static final String BASE_URL = "jdbc:mysql://localhost:3307";
-    protected static final String URL = "jdbc:mysql://localhost:3306/store";
+    protected static final String URL = "jdbc:mysql://localhost:3307/store";
     protected static final String USER = "root";
     protected static final String PASSWORD = "root";
 
