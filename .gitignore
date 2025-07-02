@@ -1,0 +1,85 @@
+# Build outputs
+target/
+build/
+out/
+bin/
+*.jar
+*.war
+*.ear
+*.nar
+
+# Dependências (se não usam gerenciador de pacotes)
+lib/
+libs/
+dependency-reduced-pom.xml
+
+# Logs e arquivos temporários
+*.log
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+*.orig
+
+# Arquivos de IDE
+## IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+*.ids
+*.orig
+
+## Eclipse
+.settings/
+.project
+.classpath
+.metadata
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+
+## NetBeans
+nbproject/
+nbactions.xml
+nb-configuration.xml
+build/
+nbbuild/
+dist/
+nbdist/
+
+## VS Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Maven
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# Gradle
+.gradle/
+gradle-app.setting
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Outros
+*.class
+*.lst
+hs_err_pid*
+replay_*.log
+*.cache
+.DS_Store
+Thumbs.db
