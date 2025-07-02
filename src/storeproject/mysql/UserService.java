@@ -13,13 +13,11 @@ import java.sql.Statement;
  *
  * @author Aluno
  */
-public class UserService {
-//    private static final String DRIVER = "com.mysql.jdbc.Driver";
-    private static final String URL = "jdbc:mysql://localhost:3306/store";
-    private static final String USER = "root";
-    private static final String PASSWORD = "root";
-    
+public class UserService extends DataBaseService {
     public UserService() {
+        super();
+        System.out.println("Debug 1");
+        
         String sql = "CREATE TABLE IF NOT EXISTS User (" +
                      "id INT AUTO_INCREMENT PRIMARY KEY, " +
                      "name VARCHAR(255) NOT NULL, " +
@@ -31,16 +29,19 @@ public class UserService {
                      "state CHAR(2), " +
                      "zip CHAR(8))";
         
-        Connection conn;
+//        try {
+//            conn = DriverManager.getConnection(URL, USER, PASSWORD);
+//            Statement stmt = conn.createStatement();
+//            stmt.execute(sql);
+//        } catch (SQLException e) {
+//            throw new RuntimeException(e);
+//        }
         
-        try {
-            System.out.println("Debug 1");
-            conn = DriverManager.getConnection(URL, USER, PASSWORD);
-            System.out.println("Debug 2");
-            Statement stmt = conn.createStatement();
+        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+             Statement stmt = conn.createStatement()) {
             stmt.execute(sql);
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Database creation failed. Check MySQL server.", e);
         }
     }
 }
