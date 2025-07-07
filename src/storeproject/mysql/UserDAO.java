@@ -4,7 +4,6 @@ import storeproject.model.User;
 import storeproject.model.UserRole;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -12,12 +11,14 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.sql.DriverManager.getConnection;
+
 public class UserDAO extends DataBaseService {
 
     public UserDAO() {
-        super(); // Chama o construtor da superclasse (cria o banco se necessário)
-        createTable(); // Implementação do método abstrato
-        insertInitialUsers(); // Insere os usuários iniciais
+        super(); // Cria o banco se necessário
+        createTable();
+        insertInitialUsers();
     }
 
     protected void createTable() {
@@ -32,7 +33,7 @@ public class UserDAO extends DataBaseService {
                 "state CHAR(2), " +
                 "zip CHAR(8))";
 
-        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+        try (Connection conn = getConnection();
              Statement stmt = conn.createStatement()) {
             stmt.execute(sql);
         } catch (SQLException e) {
@@ -40,9 +41,9 @@ public class UserDAO extends DataBaseService {
         }
     }
 
-    // Método para inserir usuários iniciais
     private void insertInitialUsers() {
-        String sql = "INSERT IGNORE INTO user (nome, cpf, password, role, address, city, state, zip) " +
+        String sql = "INSERT IGNORE INTO user " +
+                "(nome, cpf, password, role, address, city, state, zip) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         User[] initialUsers = {
@@ -58,7 +59,7 @@ public class UserDAO extends DataBaseService {
                         "Rua A, 123", "Manaus", "AM", "69000001")
         };
 
-        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+        try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             for (User user : initialUsers) {
@@ -70,46 +71,43 @@ public class UserDAO extends DataBaseService {
                 stmt.setString(6, user.getCity());
                 stmt.setString(7, user.getState());
                 stmt.setString(8, user.getZip());
-                stmt.executeUpdate();
+                stmt.addBatch();
             }
+            stmt.executeBatch();
         } catch (SQLException e) {
             throw new RuntimeException("Falha ao inserir usuários iniciais", e);
         }
     }
 
-    // Autenticação de usuário
     public User authenticate(String cpf, String password) {
-        String sql = "SELECT * FROM users WHERE cpf = ? AND password = ?";
+        String sql = "SELECT * FROM user WHERE cpf = ? AND password = ?";
 
-        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+        try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, cpf);
             stmt.setString(2, password);
 
-            ResultSet rs = stmt.executeQuery();
-
-            if (rs.next()) {
-                return resultSetToUser(rs);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapResultSetToUser(rs);
+                }
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Falha na autenticação", e);
+            throw new RuntimeException("Erro na autenticação", e);
         }
         return null;
     }
 
-    // Criação de novo usuário
-    public boolean createUser(User user) throws SQLException {
+    public boolean createUser(User user) {
         String sql = "INSERT INTO user (nome, cpf, password, role, address, city, state, zip) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
-        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+        try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             setUserParameters(stmt, user);
-
             int affectedRows = stmt.executeUpdate();
-
             if (affectedRows > 0) {
                 try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
                     if (generatedKeys.next()) {
@@ -118,24 +116,22 @@ public class UserDAO extends DataBaseService {
                     }
                 }
             }
+            return false;
         } catch (SQLException e) {
             throw new RuntimeException("Falha ao criar usuário", e);
         }
-        return false;
     }
 
-    // Buscar usuário por ID
     public User getUserById(int id) {
         String sql = "SELECT * FROM user WHERE id = ?";
-
-        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+        try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setInt(1, id);
-            ResultSet rs = stmt.executeQuery();
-
-            if (rs.next()) {
-                return resultSetToUser(rs);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapResultSetToUser(rs);
+                }
             }
         } catch (SQLException e) {
             throw new RuntimeException("Falha ao buscar usuário por ID", e);
@@ -143,18 +139,16 @@ public class UserDAO extends DataBaseService {
         return null;
     }
 
-    // Buscar usuário por CPF
     public User getUserByCpf(String cpf) {
         String sql = "SELECT * FROM user WHERE cpf = ?";
-
-        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+        try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, cpf);
-            ResultSet rs = stmt.executeQuery();
-
-            if (rs.next()) {
-                return resultSetToUser(rs);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapResultSetToUser(rs);
+                }
             }
         } catch (SQLException e) {
             throw new RuntimeException("Falha ao buscar usuário por CPF", e);
@@ -162,45 +156,35 @@ public class UserDAO extends DataBaseService {
         return null;
     }
 
-    // Atualizar usuário
     public boolean updateUser(User user) {
-        String sql = "UPDATE user SET nome = ?, cpf = ?, password = ?, role = ?, " +
-                "address = ?, city = ?, state = ?, zip = ? WHERE id = ?";
-
-        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+        String sql = "UPDATE user SET nome = ?, cpf = ?, password = ?, role = ?, address = ?, city = ?, state = ?, zip = ? WHERE id = ?";
+        try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             setUserParameters(stmt, user);
             stmt.setInt(9, user.getId());
-
-            int affectedRows = stmt.executeUpdate();
-            return affectedRows > 0;
+            return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
             throw new RuntimeException("Falha ao atualizar usuário", e);
         }
     }
 
-    // Deletar usuário
     public boolean deleteUser(int id) {
         String sql = "DELETE FROM user WHERE id = ?";
-
-        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+        try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setInt(1, id);
-            int affectedRows = stmt.executeUpdate();
-            return affectedRows > 0;
+            return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
             throw new RuntimeException("Falha ao deletar usuário", e);
         }
     }
 
-    // Listar todos os usuários
     public List<User> getAllUsers() {
         List<User> users = new ArrayList<>();
         String sql = "SELECT * FROM user";
-
-        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+        try (Connection conn = getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
 
@@ -213,19 +197,17 @@ public class UserDAO extends DataBaseService {
         return users;
     }
 
-    // Listar usuários por tipo
     public List<User> getUsersByRole(UserRole role) {
         List<User> users = new ArrayList<>();
         String sql = "SELECT * FROM user WHERE role = ?";
-
-        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+        try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, role.name());
-            ResultSet rs = stmt.executeQuery();
-
-            while (rs.next()) {
-                users.add(resultSetToUser(rs));
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    users.add(resultSetToUser(rs));
+                }
             }
         } catch (SQLException e) {
             throw new RuntimeException("Falha ao listar usuários por tipo", e);
@@ -233,7 +215,6 @@ public class UserDAO extends DataBaseService {
         return users;
     }
 
-    // Método auxiliar para converter ResultSet em User
     private User resultSetToUser(ResultSet rs) throws SQLException {
         User user = new User();
         user.setId(rs.getInt("id"));
@@ -248,7 +229,6 @@ public class UserDAO extends DataBaseService {
         return user;
     }
 
-    // Método auxiliar para configurar parâmetros do PreparedStatement
     private void setUserParameters(PreparedStatement stmt, User user) throws SQLException {
         stmt.setString(1, user.getName());
         stmt.setString(2, user.getCpf());
@@ -258,5 +238,9 @@ public class UserDAO extends DataBaseService {
         stmt.setString(6, user.getCity());
         stmt.setString(7, user.getState());
         stmt.setString(8, user.getZip());
+    }
+
+    private User mapResultSetToUser(ResultSet rs) throws SQLException {
+        return resultSetToUser(rs);
     }
 }

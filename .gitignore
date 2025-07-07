@@ -83,3 +83,7 @@ replay_*.log
 *.cache
 .DS_Store
 Thumbs.db
+
+# Arquivos de configuração sensíveis
+.env
+*.env

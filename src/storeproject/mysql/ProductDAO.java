@@ -203,4 +203,13 @@ public class ProductDAO extends DataBaseService {
         product.setStockQuantity(rs.getInt("stock_quantity"));
         return product;
     }
+    public boolean updateProductStock(Connection conn, int productId, int newStock) throws SQLException {
+        String sql = "UPDATE products SET stock_quantity = ? WHERE id = ?";
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setDouble(1, newStock);
+            stmt.setInt(2, productId);
+            return stmt.executeUpdate() > 0;
+        }
+    }
 }

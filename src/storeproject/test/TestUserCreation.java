@@ -1,7 +1,7 @@
 package storeproject.test;
 import storeproject.model.User;
-import storeproject.mysql.UserDAO;
 import storeproject.model.UserRole;
+import storeproject.mysql.UserDAO;
 /*
 *
 * Classe para testar se o programa estava criando tabelas no banco de dados
@@ -9,6 +9,7 @@ import storeproject.model.UserRole;
 
 public class TestUserCreation {
     public static void main(String[] args) {
+
         UserDAO userDAO = new UserDAO();
 
         User testUser = new User(
